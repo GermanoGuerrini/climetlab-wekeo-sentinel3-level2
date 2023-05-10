@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 from __future__ import annotations
 
-from typing import Any
-
 import climetlab as cml
 from climetlab import Dataset
 from climetlab.decorators import normalize
