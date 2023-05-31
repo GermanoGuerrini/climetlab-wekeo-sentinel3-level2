@@ -7,11 +7,35 @@
 # nor does it submit to any jurisdiction.
 from __future__ import annotations
 
+import re
+
 import climetlab as cml
+import xarray as xr
 from climetlab import Dataset
 from climetlab.decorators import normalize
 
 __version__ = "0.1.0"
+
+
+def merger(paths):
+    print(f"merging {len(paths)} paths.")
+    print(paths)
+    data_paths = [x for x in paths if re.match(f".*/.*reflectance\.nc$", x)]
+    ds = xr.open_mfdataset(data_paths)
+
+    coord_paths = [x for x in paths if x.endswith("/time_coordinates.nc")]
+    assert len(coord_paths) == 1, paths
+    coord_ds = xr.open_dataset(coord_paths[0])
+
+    # do something to change 'ds' using 'coord_ds'
+    # ...
+    # something like this maybe?
+    # ds[TIME_COORD_NAME] = xr.DataArray(coord_ds.values)
+    # ds.set_coords...
+    # ...
+    # now the ds has coordinates is ready to be merge to another one
+
+    return ds
 
 
 class Main(Dataset):
@@ -106,8 +130,32 @@ class Main(Dataset):
 
         print(query)
 
-        self.source = cml.load_source("wekeo", query)
-        self._xarray = None
+        # TODO: find the names of these sub-directories
+        # or let the "wekeo" source find them
+        dirnames = [
+            "S3A_OL_2_WFR____20230506T091023_20230506T091323_20230506T112056_0180_098_264_1980_MAR_O_NR_003.SEN3",
+            "S3A_OL_2_WFR____20230508T081801_20230508T082101_20230508T102705_0179_098_292_1980_MAR_O_NR_003.SEN3",
+        ]
+
+        sources = []
+        for root in dirnames:
+            filter = lambda x: re.match(f".*/{root}/.*\.nc", x) or x.endswith(".SEN3")
+            s = cml.load_source(
+                "wekeo",
+                query,
+                filter=filter,
+                merger=merger,  # TODO: the merger function is above, has access to other netcdf.
+            )
+            sources.append(s)
+
+        self.sources = sources
+
+    def to_xarray(self):
+        datasets = [s.to_xarray() for s in self.sources]
+        # TODO: make sure the data is concatenable
+        print(datasets)
+        datasets = [datasets[0]]
+        return xr.concat(datasets, dim="time")
 
 
 class ol_2_wfr(Main):
