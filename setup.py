@@ -51,9 +51,21 @@ setuptools.setup(
         "climetlab.datasets": [
             # End-users will use cml.load_dataset("climetlab-wekeo-sentinel3-level2", ...)
             # see the tests/ folder for a example.
-            "wekeo-sentinel3-olci-2-wfr=climetlab_wekeo_sentinel3_level2.main:ol_2_wfr",  # noqa: E501
-            "wekeo-sentinel3-olci-2-wrr=climetlab_wekeo_sentinel3_level2.main:ol_2_wrr",  # noqa: E501
-            # Other datasets can be included here
+            "wekeo-sentinel3-sral-l2-wat=climetlab_wekeo_sentinel3_level2.sral_l2_wat:sral_l2_wat",
+            "wekeo-sentinel3-sral-l1-sra-bs=climetlab_wekeo_sentinel3_level2.sral_l1_sra_bs:sral_l1_sra_bs",
+            "wekeo-sentinel3-sral-l1-sra-a=climetlab_wekeo_sentinel3_level2.sral_l1_sra_a:sral_l1_sra_a",
+            "wekeo-sentinel3-sral-l1-sra=climetlab_wekeo_sentinel3_level2.sral_l1_sra:sral_l1_sra",
+            "wekeo-sentinel3-slstrl2-wst=climetlab_wekeo_sentinel3_level2.slstrl2_wst:slstrl2_wst",
+            "wekeo-sentinel3-slstrl1-rbt=climetlab_wekeo_sentinel3_level2.slstrl1_rbt:slstrl1_rbt",
+            "wekeo-sentinel3-olci-l2-wrr=climetlab_wekeo_sentinel3_level2.olci_l2_wrr:olci_l2_wrr",
+            "wekeo-sentinel3-olci-l2-wfr=climetlab_wekeo_sentinel3_level2.olci_l2_wfr:olci_l2_wfr",
+            "wekeo-sentinel3-olci-l1-err=climetlab_wekeo_sentinel3_level2.olci_l1_err:olci_l1_err",
+            "wekeo-sentinel3-olci-l1-efr=climetlab_wekeo_sentinel3_level2.olci_l1_efr:olci_l1_efr",
+            "wekeo-sentinel3-olci-l2-ocrr=climetlab_wekeo_sentinel3_level2.olci_l2_ocrr:olci_l2_ocrr",
+            "wekeo-sentinel3-olci-l2-ocfr=climetlab_wekeo_sentinel3_level2.olci_l2_ocfr:olci_l2_ocfr",
+            "wekeo-sentinel3-slstr-l2-frp=climetlab_wekeo_sentinel3_level2.slstr_l2_frp:slstr_l2_frp",
+            "wekeo-sentinel3-slstr-l2-aod=climetlab_wekeo_sentinel3_level2.slstr_l2_aod:slstr_l2_aod",
+           # Other datasets can be included here
             # "climetlab-wekeo-sentinel3-level2-dataset-2= climetlab_wekeo_sentinel3_level2.main2:Main2",  # noqa: E501
         ]
         # source plugins would be here
