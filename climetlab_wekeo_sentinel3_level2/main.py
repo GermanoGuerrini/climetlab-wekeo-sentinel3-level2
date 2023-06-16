@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import climetlab as cml
 from climetlab import Dataset
-from climetlab.decorators import normalize
 
 __version__ = "0.1.0"
 
@@ -26,37 +25,24 @@ class Main(Dataset):
     terms_of_use = (
         "By downloading data from this dataset, "
         "you agree to the terms and conditions defined at "
-        "https://github.com/GermanoGuerrini/"
-        "climetlab-wekeo-sentinel3-level2/"
-        "blob/main/LICENSE. "
+        "https://www.copernicus.eu/en/access-data/copyright-and-licences"
         "If you do not agree with such terms, do not download the data. "
     )
 
     dataset = None
 
-    @normalize("area", "bounding-box(list)")
-    @normalize("start", "date(%Y-%m-%dT%H:%M:%SZ)")
-    @normalize("end", "date(%Y-%m-%dT%H:%M:%SZ)")
-    @normalize("type_", ["OL_2_WFR___", "OL_2_WRR___"])
-    @normalize("sat", ["Sentinel-3A", "Sentinel-3B"])
-    @normalize("timeliness", ["NT", "NR"])
-    @normalize("orbitdir", ["ASCENDING", "DESCENDING"])
-    @normalize("relorbit", "int")
-    @normalize("orbit", "int")
-    @normalize("cycle", "int")
+    inputs = []
+    choices = []
+
     def __init__(
         self,
-        area,
-        start,
-        end,
-        type_=None,
-        sat=None,
-        timeliness=None,
-        orbitdir=None,
-        relorbit=None,
-        orbit=None,
-        cycle=None,
+        *args,
+        **kwargs
     ):
+        type_ = kwargs["type"]
+        area = kwargs["area"]
+        start = kwargs["start"]
+        end = kwargs["end"]
         query = {
             "datasetId": f"EO:EUM:DAT:SENTINEL-3:{type_}",
             "boundingBoxValues": [
@@ -75,12 +61,7 @@ class Main(Dataset):
             ],
         }
 
-        choices = {
-            "type": type_,
-            "sat": sat,
-            "timeliness": timeliness,
-            "orbitdir": orbitdir,
-        }
+        choices = dict(zip(self.choices, [kwargs[c] for c in self.choices]))
         if any(c is not None for c in choices.values()):
             query["stringChoiceValues"] = []
 
@@ -90,11 +71,7 @@ class Main(Dataset):
                         {"name": choice, "value": choices[choice]}
                     )
 
-        inputs = {
-            "relorbit": relorbit,
-            "orbit": orbit,
-            "cycle": cycle,
-        }
+        inputs = dict(zip(self.inputs, [kwargs[i] for i in self.inputs]))
         if any(c is not None for c in inputs.values()):
             query["stringInputValues"] = []
 
@@ -104,17 +81,5 @@ class Main(Dataset):
                         {"name": input, "value": inputs[input]}
                     )
 
-        print(query)
-
         self.source = cml.load_source("wekeo", query)
         self._xarray = None
-
-
-class ol_2_wfr(Main):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, type_="OL_2_WFR___", **kwargs)
-
-
-class ol_2_wrr(Main):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, type_="OL_2_WRR___", **kwargs)
