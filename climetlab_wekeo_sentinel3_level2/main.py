@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 from __future__ import annotations
 
+import os
 import re
 
 import climetlab as cml
@@ -18,23 +19,24 @@ __version__ = "0.1.0"
 
 def merger(paths):
     print(f"merging {len(paths)} paths.")
-    print(paths)
-    data_paths = [x for x in paths if re.match(f".*/.*reflectance\.nc$", x)]
+    #print(paths)
+    data_paths = [x for x in paths if re.match(".*/.*reflectance\.nc$", x)]
     ds = xr.open_mfdataset(data_paths)
-
     coord_paths = [x for x in paths if x.endswith("/time_coordinates.nc")]
     assert len(coord_paths) == 1, paths
     coord_ds = xr.open_dataset(coord_paths[0])
-
-    # do something to change 'ds' using 'coord_ds'
-    # ...
-    # something like this maybe?
-    # ds[TIME_COORD_NAME] = xr.DataArray(coord_ds.values)
-    # ds.set_coords...
-    # ...
-    # now the ds has coordinates is ready to be merge to another one
-
+    ds = ds.assign_coords(time=coord_ds["time_stamp"].values)
     return ds
+
+
+def extract_dirnames(source):
+    dirnames = set()
+    for inner_source in source.sources:
+        for file_ in inner_source.sources:
+            path = file_.path.split(os.sep)[-2]
+            dirnames.add(path)
+
+    return dirnames
 
 
 class Main(Dataset):
@@ -105,21 +107,24 @@ class Main(Dataset):
                         {"name": input, "value": inputs[input]}
                     )
 
-        # TODO: find the names of these sub-directories
-        # or let the "wekeo" source find them
-        dirnames = [
-            "S3A_OL_2_WFR____20230506T091023_20230506T091323_20230506T112056_0180_098_264_1980_MAR_O_NR_003.SEN3",
-            "S3A_OL_2_WFR____20230508T081801_20230508T082101_20230508T102705_0179_098_292_1980_MAR_O_NR_003.SEN3",
-        ]
+        filter_ = lambda x: re.match(".*/.*/.*\.nc", x) or x.endswith(".SEN3")
+        source = cml.load_source(
+            "wekeo",
+            query,
+            filter=filter_,
+        )
 
+        # We cannot know the directory names a priori, so we wait for the download and then we
+        # re-instantiate all the sources
+        dirnames = extract_dirnames(source)
         sources = []
         for root in dirnames:
-            filter = lambda x: re.match(f".*/{root}/.*\.nc", x) or x.endswith(".SEN3")
+            filter_ = lambda x, r=root: re.match(f".*/{r}/.*\.nc", x) or x.endswith(".SEN3")
             s = cml.load_source(
                 "wekeo",
                 query,
-                filter=filter,
-                merger=merger,  # TODO: the merger function is above, has access to other netcdf.
+                filter=filter_,
+                merger=merger,
             )
             sources.append(s)
 
@@ -128,10 +133,6 @@ class Main(Dataset):
     def to_xarray(self):
         datasets = [s.to_xarray() for s in self.sources]
         # TODO: make sure the data is concatenable
-        print(datasets)
+        # FIXME: *** ValueError: cannot reindex or align along dimension 'rows' because of conflicting dimension sizes: {4090, 4091}
         datasets = [datasets[0]]
         return xr.concat(datasets, dim="time")
-
-
-
-
